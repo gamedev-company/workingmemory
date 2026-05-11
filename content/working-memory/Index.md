@@ -1,0 +1,52 @@
+---
+type: index
+tags:
+  - moc
+---
+
+# Working-Memory Index
+
+Map of Content for the working-memory vault. See [[System]] for full conventions.
+
+## Core (`core/`)
+
+Elevator-pitch strata about the project. Where you start orientation.
+
+*(Empty — populate as core docs land. Likely first entries: project elevator pitch, architectural map, system thesis.)*
+
+## Reference (`ref/`)
+
+Subsystem briefings. Read before touching a subsystem.
+
+*(Empty — populate as ref docs land.)*
+
+## Schema (`schema/`)
+
+Data shapes — ORM schemas, channel event shapes, persistence models.
+
+*(Empty — populate as schema docs land.)*
+
+## Senses (`senses/`)
+
+The agent's own observations and feature/friction notes.
+
+*(Empty — populate as senses surface.)*
+
+## Design (`design/`)
+
+Architectural proposals, target shapes, audits. Active and approved entries.
+
+*(Empty — populate as design docs land.)*
+
+## Plan (`plan/`)
+
+Active execution playbooks.
+
+*(Empty — populate as plan docs land.)*
+
+## How This Works
+
+- **Conventions:** [[System]]
+- **Working scratchpad:** `short-term.md` — read at session start, curated rolling brief
+- **Chronological journals:** `journals/` — per-day, per-turn record of what was done and why
+- **Open complications:** `complications/` — linked inline from docs that need them, not indexed here
