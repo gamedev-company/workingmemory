@@ -22,9 +22,12 @@ ENRICH_MODEL = os.environ.get("OKF_ENRICH_MODEL", "qwen3.6:27b")
 
 # Folders we never card (noise / not ours). Extend per-project with
 # OKF_IGNORE_EXTRA="dir1,dir2" (comma-separated).
+# NOTE: do NOT ignore Phoenix `priv/` — it holds Ecto migrations
+# (priv/repo/migrations/*.exs) and seeds (priv/repo/seeds.exs), which are exactly
+# the schema-change files that most need cards + freshness tracking.
 IGNORE_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", ".obsidian",
                "dist", "build", "target", ".next", ".cache", "working-memory",
-               "_build", "deps", "priv", "_archive", "logs", ".claude"}
+               "_build", "deps", "_archive", "logs", ".claude"}
 IGNORE_DIRS |= {d.strip() for d in os.environ.get("OKF_IGNORE_EXTRA", "").split(",") if d.strip()}
 # Extensions worth reading into a card prompt.
 CODE_EXTS = {".py", ".ts", ".tsx", ".js", ".jsx", ".ex", ".exs", ".go", ".rs",
