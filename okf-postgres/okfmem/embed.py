@@ -20,11 +20,15 @@ def embed(text: str) -> list[float]:
 
 
 def chat(prompt: str, *, system: str | None = None, think: bool = False,
-         format_json: bool = False) -> str:
+         schema: dict | None = None) -> str:
     """One-shot chat with the local enrichment model.
 
     think=False suppresses qwen3.6's reasoning trace — we want terse card text,
     not a chain-of-thought, for routine summarization.
+
+    schema: an Ollama structured-output JSON Schema. When set, the decoder is
+    constrained to emit valid JSON conforming to it — far more reliable than the
+    plain "json" format mode, which only nudges the model.
     """
     messages = []
     if system:
@@ -38,8 +42,8 @@ def chat(prompt: str, *, system: str | None = None, think: bool = False,
         "keep_alive": "10m",   # stay resident across a folder sweep
         "options": {"temperature": 0.2, "num_ctx": 16384, "num_predict": 2048},
     }
-    if format_json:
-        payload["format"] = "json"
+    if schema is not None:
+        payload["format"] = schema
     with httpx.Client(timeout=600) as c:
         r = c.post(f"{config.OLLAMA}/api/chat", json=payload)
         r.raise_for_status()

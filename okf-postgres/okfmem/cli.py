@@ -34,11 +34,23 @@ def _changed_folders(since: str) -> list[Path]:
     return [f for f in folders if f.exists()]
 
 
+def _enrich_many(folders, project):
+    """Enrich a batch, surviving per-folder failures. Returns (ok, failed)."""
+    ok = failed = 0
+    for folder in folders:
+        try:
+            print(enrich.enrich_folder(folder, project=project))
+            ok += 1
+        except Exception as e:  # one flaky folder must not abort the batch
+            rel = folder.resolve()
+            print({"FAILED": str(rel), "error": f"{type(e).__name__}: {str(e)[:140]}"})
+            failed += 1
+    print(f"--- done: {ok} enriched, {failed} failed ---")
+    return ok, failed
+
+
 def cmd_index(args):
-    project = args.project
-    for folder in _code_folders():
-        res = enrich.enrich_folder(folder, project=project)
-        print(res)
+    _enrich_many(_code_folders(), args.project)
 
 
 def cmd_enrich(args):
@@ -46,8 +58,7 @@ def cmd_enrich(args):
 
 
 def cmd_enrich_changed(args):
-    for folder in _changed_folders(args.since):
-        print(enrich.enrich_folder(folder, project=args.project))
+    _enrich_many(_changed_folders(args.since), args.project)
 
 
 def cmd_stale(args):

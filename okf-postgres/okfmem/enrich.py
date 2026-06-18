@@ -12,6 +12,19 @@ from . import config, db, embed
 PER_FILE_CHARS = 2500     # how much of each file to show the model
 TOTAL_CHARS = 24000       # cap on the whole prompt's code payload
 
+# Ollama structured-output schema: constrains the model to valid, conforming JSON.
+CARD_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "title": {"type": "string"},
+        "description": {"type": "string"},
+        "tags": {"type": "array", "items": {"type": "string"}},
+        "map": {"type": "array", "items": {"type": "string"}},
+        "gotchas": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["title", "description", "tags", "map"],
+}
+
 SYSTEM = (
     "You are a codebase cartographer. Given the files directly inside ONE folder, "
     "produce a terse, durable map of what the folder does. Be concrete: name files, "
@@ -104,8 +117,16 @@ def enrich_folder(folder: Path, *, project: str | None = None) -> dict:
     if not files:
         return {"skipped": str(folder.relative_to(config.REPO)), "reason": "no code files"}
 
-    raw = embed.chat(_build_prompt(folder, files), system=SYSTEM, think=False, format_json=True)
-    data = _parse_json(raw)
+    prompt = _build_prompt(folder, files)
+    data = None
+    for attempt in range(2):   # schema-constrained, but retry once on any parse miss
+        raw = embed.chat(prompt, system=SYSTEM, think=False, schema=CARD_SCHEMA)
+        try:
+            data = _parse_json(raw)
+            break
+        except (ValueError, json.JSONDecodeError):
+            if attempt == 1:
+                raise
 
     rel = folder.relative_to(config.REPO)
     sources = [(str(f.relative_to(config.REPO)), git_sha(f)) for f in files]
