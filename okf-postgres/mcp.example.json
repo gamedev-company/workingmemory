@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "okf-memory": {
+      "command": "/Users/landonnoss/workspace/lib/llm/workingmemory/okf-postgres/bin/okf-memory-mcp",
+      "env": {
+        "OKF_REPO": "/path/to/the/project/you/want/recall/over"
+      }
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres",
+               "postgresql://localhost/okf_memory"]
+    }
+  }
+}

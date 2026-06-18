@@ -41,12 +41,16 @@ Each turn entry follows this template:
 
 If multiple insights surfaced in the turn, each gets its own `### ★ Insight: <title>` subsection.
 
-If the journal file doesn't exist yet, prepend this frontmatter (the parent will tell you the project name):
+If the journal file doesn't exist yet, prepend this frontmatter (the parent will tell you the project name). The fields are OKF-aligned — `type` is required, the rest orient consumers:
 
 ```markdown
 ---
 type: journal
+title: Journal YYYY-MM-DD
+description: Per-turn record of what was done and why.
+tags: [journal]
 date: YYYY-MM-DD
+timestamp: YYYY-MM-DDTHH:MM:SSZ
 project: <project-name>
 ---
 

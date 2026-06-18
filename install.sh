@@ -12,7 +12,7 @@
 
 set -e
 
-WORKING_MEMORY_KIT_VERSION="0.1.0"
+WORKING_MEMORY_KIT_VERSION="0.2.0"
 
 # ── Defaults ──────────────────────────────────────────────────────────────────
 TARGET="$PWD"
@@ -126,14 +126,16 @@ else
   if [ "$WITH_OBSIDIAN" -eq 0 ] && [ -d "$TARGET_WM/.obsidian" ]; then
     rm -rf "$TARGET_WM/.obsidian"
   fi
-  # Inject today's date into short-term.md template
+  # Inject today's date (OKF timestamp + legacy updated) into short-term.md template
   today=$(date +%Y-%m-%d)
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   if [ -f "$TARGET_WM/short-term.md" ]; then
-    if [ "$(uname)" = "Darwin" ]; then
-      sed -i '' "s/updated: YYYY-MM-DD/updated: $today/" "$TARGET_WM/short-term.md"
-    else
-      sed -i "s/updated: YYYY-MM-DD/updated: $today/" "$TARGET_WM/short-term.md"
-    fi
+    sedi() { if [ "$(uname)" = "Darwin" ]; then sed -i '' "$1" "$2"; else sed -i "$1" "$2"; fi; }
+    sedi "s/updated: YYYY-MM-DD/updated: $today/" "$TARGET_WM/short-term.md"
+    # Stamp the OKF timestamp placeholder across all shipped templates that carry it
+    for f in short-term.md Index.md System.md; do
+      [ -f "$TARGET_WM/$f" ] && sedi "s/timestamp: YYYY-MM-DDTHH:MM:SSZ/timestamp: $now/" "$TARGET_WM/$f"
+    done
   fi
 fi
 
