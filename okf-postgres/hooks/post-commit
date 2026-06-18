@@ -12,9 +12,8 @@ REPO="$(git rev-parse --show-toplevel)"
 (
   export OKF_REPO="$REPO"
   export OKF_VAULT="${OKF_VAULT:-$REPO/working-memory}"
-  # okfmem is not pip-installed and git runs hooks from the work-tree root,
-  # so put the package dir on PYTHONPATH for the `python -m` launch.
-  export PYTHONPATH="$OKF_POSTGRES_DIR${PYTHONPATH:+:$PYTHONPATH}"
+  # okfmem is installed editable into the venv (pip install -e .), so it imports
+  # from the work-tree root where git runs hooks — no PYTHONPATH needed.
   "$OKF_POSTGRES_DIR/.venv/bin/python" -m okfmem.cli enrich-changed --since HEAD~1 \
     >> "$REPO/.git/okf-enrich.log" 2>&1
 ) &

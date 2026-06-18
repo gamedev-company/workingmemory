@@ -1,7 +1,3 @@
-# okf-postgres — Python deps for the enrichment daemon + MCP server
-psycopg[binary]>=3.2      # Postgres driver (binary = bundled libpq, no system build)
-pgvector>=0.3.6           # registers the `vector` type adapter for psycopg3
-httpx>=0.27               # talks to the local Ollama HTTP API (embeddings + chat)
-python-frontmatter>=1.1   # parse/emit YAML frontmatter on the OKF markdown
-PyYAML>=6.0
-mcp>=1.2                  # official Model Context Protocol Python SDK (FastMCP)
+# Install the okfmem package (editable) plus its dependencies (from pyproject.toml).
+# Editable install makes `okfmem` importable from any cwd — no PYTHONPATH needed.
+-e .

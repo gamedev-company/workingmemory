@@ -57,7 +57,7 @@ The discipline rule (added to `CLAUDE.md` by the installer) tells the agent to r
 ### One-liner (clone + install)
 
 ```bash
-git clone https://github.com/landongn/workingmemory.git /tmp/wm-kit
+git clone https://github.com/gamedev-company/workingmemory.git /tmp/wm-kit
 cd /path/to/your/project
 /tmp/wm-kit/install.sh
 ```

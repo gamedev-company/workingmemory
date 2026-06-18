@@ -52,7 +52,10 @@ working-memory/  (OKF markdown, git)  ──indexer──▶  Postgres + pgvecto
 
 1. **Postgres + pgvector** — using the running Postgres.app (16.4, pgvector 0.7.4).
    Database `okf_memory` created; schema applied.
-2. **Python env** — `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`
+2. **Python env** — `python3 -m venv .venv && .venv/bin/pip install -e .`
+   (editable install; makes `okfmem` importable from any cwd, so the launcher and
+   git hook need no `PYTHONPATH`. `pip install -r requirements.txt` does the same —
+   it just points at `-e .`.)
 3. **Models** (local, via Ollama) — `nomic-embed-text` (768-dim embeddings),
    `qwen3.6:27b` (enrichment + interactive).
 

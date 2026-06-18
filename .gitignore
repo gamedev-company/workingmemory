@@ -10,3 +10,5 @@ okf-postgres/test-vault/
 __pycache__/
 *.pyc
 .git/okf-enrich.log
+*.egg-info/
+okf-postgres/build/
