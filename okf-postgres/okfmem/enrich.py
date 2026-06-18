@@ -3,6 +3,7 @@ premium agent out of routine codebase summarization."""
 from __future__ import annotations
 import hashlib
 import json
+import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -58,7 +59,13 @@ def _parse_json(raw: str) -> dict:
     start, end = s.find("{"), s.rfind("}")
     if start == -1 or end == -1:
         raise ValueError(f"no JSON object in model reply: {raw[:200]!r}")
-    return json.loads(s[start:end + 1])
+    snippet = s[start:end + 1]
+    try:
+        return json.loads(snippet)
+    except json.JSONDecodeError:
+        # Strip illegal raw control chars (a common structured-output slip) and retry.
+        cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", snippet)
+        return json.loads(cleaned)
 
 
 def git_sha(path: Path) -> str:
@@ -119,13 +126,15 @@ def enrich_folder(folder: Path, *, project: str | None = None) -> dict:
 
     prompt = _build_prompt(folder, files)
     data = None
-    for attempt in range(2):   # schema-constrained, but retry once on any parse miss
-        raw = embed.chat(prompt, system=SYSTEM, think=False, schema=CARD_SCHEMA)
+    # Escalate temperature across retries: a deterministic low temp reproduces the
+    # SAME malformed output, so a different sample is what actually rescues it.
+    for temp in (0.2, 0.5, 0.8):
+        raw = embed.chat(prompt, system=SYSTEM, think=False, schema=CARD_SCHEMA, temperature=temp)
         try:
             data = _parse_json(raw)
             break
         except (ValueError, json.JSONDecodeError):
-            if attempt == 1:
+            if temp == 0.8:
                 raise
 
     rel = folder.relative_to(config.REPO)

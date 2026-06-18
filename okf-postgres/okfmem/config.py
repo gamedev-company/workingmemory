@@ -29,7 +29,11 @@ IGNORE_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", ".obsidia
                "dist", "build", "target", ".next", ".cache", "working-memory",
                "_build", "deps", "_archive", "logs", ".claude"}
 IGNORE_DIRS |= {d.strip() for d in os.environ.get("OKF_IGNORE_EXTRA", "").split(",") if d.strip()}
-# Extensions worth reading into a card prompt.
-CODE_EXTS = {".py", ".ts", ".tsx", ".js", ".jsx", ".ex", ".exs", ".go", ".rs",
-             ".rb", ".java", ".kt", ".swift", ".c", ".h", ".cpp", ".sql", ".sh",
-             ".css", ".scss", ".html", ".vue", ".svelte", ".md", ".toml", ".yaml", ".yml"}
+# Extensions worth reading into a card prompt. Extend per-project with
+# OKF_EXTS_EXTRA=".astro,.zig" (comma-separated; leading dot optional).
+CODE_EXTS = {".py", ".ts", ".tsx", ".js", ".jsx", ".ex", ".exs", ".heex", ".eex",
+             ".go", ".rs", ".rb", ".java", ".kt", ".swift", ".c", ".h", ".cpp",
+             ".sql", ".sh", ".css", ".scss", ".html", ".vue", ".svelte", ".md",
+             ".toml", ".yaml", ".yml"}
+CODE_EXTS |= {("" if e.strip().startswith(".") else ".") + e.strip()
+              for e in os.environ.get("OKF_EXTS_EXTRA", "").split(",") if e.strip()}

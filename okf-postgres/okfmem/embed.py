@@ -20,7 +20,7 @@ def embed(text: str) -> list[float]:
 
 
 def chat(prompt: str, *, system: str | None = None, think: bool = False,
-         schema: dict | None = None) -> str:
+         schema: dict | None = None, temperature: float = 0.2) -> str:
     """One-shot chat with the local enrichment model.
 
     think=False suppresses qwen3.6's reasoning trace — we want terse card text,
@@ -40,7 +40,7 @@ def chat(prompt: str, *, system: str | None = None, think: bool = False,
         "stream": False,
         "think": think,
         "keep_alive": "10m",   # stay resident across a folder sweep
-        "options": {"temperature": 0.2, "num_ctx": 16384, "num_predict": 2048},
+        "options": {"temperature": temperature, "num_ctx": 16384, "num_predict": 2048},
     }
     if schema is not None:
         payload["format"] = schema
