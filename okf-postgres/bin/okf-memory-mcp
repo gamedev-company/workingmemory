@@ -1,0 +1,11 @@
+#!/bin/bash
+# Launcher for the okf-memory MCP server. Resolves the package location so it
+# works no matter where the MCP host invokes it from. OKF_REPO (the project to
+# map) must be provided by the host config's env block.
+set -e
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"   # okf-postgres/
+export OKF_REPO="${OKF_REPO:?set OKF_REPO to the project repo you want recall over}"
+export OKF_VAULT="${OKF_VAULT:-$OKF_REPO/working-memory}"
+# okfmem is installed editable into this venv (pip install -e .), so it's
+# importable from any cwd — no PYTHONPATH needed.
+exec "$HERE/.venv/bin/python" -m okfmem.mcp_server

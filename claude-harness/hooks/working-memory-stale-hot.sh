@@ -7,7 +7,7 @@
 #
 # Ultra-lightweight: file stat checks + counter. No LLM calls.
 #
-# Part of the working-memory-kit: https://github.com/landongn/workingmemory
+# Part of the working-memory-kit: https://github.com/gamedev-company/workingmemory
 
 set -e
 

@@ -1,0 +1,21 @@
+#!/bin/bash
+# git post-commit hook: refresh knowledge cards for folders touched by this commit.
+# Runs the enrichment in the BACKGROUND so the commit returns instantly — the
+# small local model can take a minute per changed folder.
+#
+# Install:  ln -sf <okf-postgres>/hooks/post-commit <repo>/.git/hooks/post-commit
+set -e
+
+OKF_POSTGRES_DIR="__OKF_POSTGRES_DIR__"          # filled in by install (see README)
+REPO="$(git rev-parse --show-toplevel)"
+
+(
+  export OKF_REPO="$REPO"
+  export OKF_VAULT="${OKF_VAULT:-$REPO/working-memory}"
+  # okfmem is installed editable into the venv (pip install -e .), so it imports
+  # from the work-tree root where git runs hooks — no PYTHONPATH needed.
+  "$OKF_POSTGRES_DIR/.venv/bin/python" -m okfmem.cli enrich-changed --since HEAD~1 \
+    >> "$REPO/.git/okf-enrich.log" 2>&1
+) &
+
+exit 0

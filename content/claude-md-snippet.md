@@ -1,12 +1,13 @@
-<!-- working-memory-kit:begin version=0.1.0 -->
+<!-- working-memory-kit:begin version=0.2.0 -->
 ## Documentation Discipline
 
 **Non-negotiable.** The `working-memory/` vault is the agent's external cognitive prosthetic across sessions — the durable substrate of decisions, design, and architectural memory. Authoritative conventions: [`working-memory/System.md`](working-memory/System.md).
 
-Tiers: `core/` (elevator-pitch facts) · `ref/` (subsystem briefings) · `schema/` (data shapes) · `senses/` (the agent's own observations + feature ideas + friction notes) · `design/` (proposals) · `plan/` (execution playbooks) · `complications/` (Q&A docs that complicate ideas before code) · `journals/` (per-day, per-turn record) · `short-term.md` (rolling session-boot brief, capped ~300 lines).
+Tiers: `core/` (elevator-pitch facts) · `ref/` (subsystem briefings) · `schema/` (data shapes) · `senses/` (the agent's own observations + feature ideas + friction notes) · `design/` (proposals) · `plan/` (execution playbooks) · `complications/` (Q&A docs that complicate ideas before code) · `journals/` (per-day, per-turn record) · `cards/` (auto-maintained per-folder code maps, if the recall layer is installed) · `short-term.md` (rolling session-boot brief, capped ~300 lines).
 
 ### Session lifecycle
 
+- **Before re-reading the codebase**: if the recall layer (`okf-postgres`) is installed, call `memory_recall` first — read a card (~50 tokens) instead of re-exploring files (thousands). Respect each result's `freshness` verdict; a `stale` card means the code drifted.
 - **At session start**: read `working-memory/short-term.md` first. Then `Index.md` if you need orientation.
 - **Per turn**: append a What/Why summary (and any `★ Insight` blocks) to today's `working-memory/journals/YYYY-MM-DD.md`. Per-turn cadence — that's where the churn happens.
 - **Before code on a non-trivial idea**: open or extend `working-memory/complications/<topic>.md`. Each open question gets a yes-and proposed answer; resolved questions move to `## Resolved` in-place.

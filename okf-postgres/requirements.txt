@@ -1,0 +1,3 @@
+# Install the okfmem package (editable) plus its dependencies (from pyproject.toml).
+# Editable install makes `okfmem` importable from any cwd — no PYTHONPATH needed.
+-e .

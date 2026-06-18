@@ -1,5 +1,9 @@
 ---
 type: meta
+title: Short-Term Memory
+description: Rolling session-boot brief — read first at session start, capped ~300 lines.
+tags: [short-term, session-boot]
+timestamp: YYYY-MM-DDTHH:MM:SSZ
 updated: YYYY-MM-DD
 ---
 

@@ -4,6 +4,21 @@
 
 The `working-memory/` vault is the external memory for an AI coding agent across sessions — the durable substrate of decisions, design, and architectural memory. This kit packages the convention + (optionally) Claude Code harness glue so you can drop it into any project.
 
+## New in 0.2 — OKF + Postgres recall
+
+Two upgrades, both backward-compatible:
+
+- **OKF-aligned frontmatter.** The vault is now an [Open Knowledge Format](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing)
+  producer — durable docs lead with OKF's structured fields (`type`, `title`,
+  `description`, `tags`, `timestamp`, `resource`), keeping `status`/`project` as
+  kit extensions. Old `updated:` / `source:` still work. See `working-memory/System.md`.
+- **Optional recall layer ([`okf-postgres/`](okf-postgres/README.md)).** Adds a
+  Postgres + pgvector index *under* the markdown: a small local model writes
+  per-folder `feature-card` code maps on git commit, and any model recalls them
+  over MCP (`memory_recall`) — with a git-SHA freshness contract — instead of
+  re-reading source every session. The base kit still works as a pure file
+  convention without it.
+
 ## What you get
 
 **Content** (agent-agnostic — works with Claude Code, Cursor, Aider, or no agent):
@@ -42,7 +57,7 @@ The discipline rule (added to `CLAUDE.md` by the installer) tells the agent to r
 ### One-liner (clone + install)
 
 ```bash
-git clone https://github.com/landongn/workingmemory.git /tmp/wm-kit
+git clone https://github.com/gamedev-company/workingmemory.git /tmp/wm-kit
 cd /path/to/your/project
 /tmp/wm-kit/install.sh
 ```
@@ -142,7 +157,7 @@ The full convention (frontmatter, tags, tier purposes, when-to-promote rules) is
 
 ## What this is NOT
 
-- It is not a knowledge graph, database, or search tool. It is a file convention.
+- The base kit is a file convention, not a knowledge graph, database, or search tool. (The optional [`okf-postgres/`](okf-postgres/README.md) layer adds exactly those — embeddings, full-text, semantic recall — *underneath* the markdown, without changing the convention.)
 - It does not replace Git history. Decisions still belong in commit messages; the vault captures the *why* behind work, not the *what*.
 - It does not enforce structure beyond what the discipline rule in `CLAUDE.md` asks the agent to follow. If the agent isn't reading `CLAUDE.md`, the kit can't help.
 
@@ -157,7 +172,7 @@ The kit is intentionally small. To adapt:
 
 ## Versioning
 
-`install.sh` reports its version in the install header. The `CLAUDE.md` sentinel includes the version that produced the block: `<!-- working-memory-kit:begin version=0.1.0 -->`. Run `--upgrade` to refresh CLAUDE.md and harness glue to whatever version of the kit you're running.
+`install.sh` reports its version in the install header. The `CLAUDE.md` sentinel includes the version that produced the block: `<!-- working-memory-kit:begin version=0.2.0 -->`. Run `--upgrade` to refresh CLAUDE.md and harness glue to whatever version of the kit you're running.
 
 Changelog is in `CHANGELOG.md` (when releases start landing).
 

@@ -3,3 +3,12 @@
 *.swo
 .idea/
 .vscode/
+
+# okf-postgres recall layer — local-only artifacts
+okf-postgres/.venv/
+okf-postgres/test-vault/
+__pycache__/
+*.pyc
+.git/okf-enrich.log
+*.egg-info/
+okf-postgres/build/
