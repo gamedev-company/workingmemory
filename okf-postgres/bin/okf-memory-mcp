@@ -6,4 +6,7 @@ set -e
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"   # okf-postgres/
 export OKF_REPO="${OKF_REPO:?set OKF_REPO to the project repo you want recall over}"
 export OKF_VAULT="${OKF_VAULT:-$OKF_REPO/working-memory}"
+# Make the in-tree okfmem package importable no matter where the host launches us
+# (the package is not pip-installed; `python -m` otherwise relies on cwd).
+export PYTHONPATH="$HERE${PYTHONPATH:+:$PYTHONPATH}"
 exec "$HERE/.venv/bin/python" -m okfmem.mcp_server
