@@ -4,11 +4,15 @@
 .idea/
 .vscode/
 
-# okf-postgres recall layer — local-only artifacts
-okf-postgres/.venv/
-okf-postgres/test-vault/
+# okf-postgres recall layer — local-only artifacts (nested in the vault template)
+content/working-memory/okf-postgres/.venv/
+content/working-memory/okf-postgres/test-vault/
+content/working-memory/okf-postgres/build/
+# …and the same once installed into a target project's vault
+working-memory/okf-postgres/.venv/
+working-memory/okf-postgres/test-vault/
+working-memory/okf-postgres/build/
 __pycache__/
 *.pyc
 .git/okf-enrich.log
 *.egg-info/
-okf-postgres/build/

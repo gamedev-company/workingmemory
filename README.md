@@ -6,11 +6,11 @@ The `working-memory/` vault is the external memory for an AI coding agent across
 
 ## New in 0.3 — one-command recall setup (macOS)
 
-The recall layer is no longer a manual, machine-specific chore. New
-`okf-postgres/scripts/` ship a **doctor** (verifies/installs Ollama + models,
-Postgres + pgvector, db + schema, venv) and an **ingest** script (inventories a repo
-into knowledge cards). The installer now **offers to run them at the end** so you can
-go from `install.sh` to a fully-indexed codebase in one sitting. See
+The recall layer is no longer a manual, machine-specific chore. It now ships **inside
+the vault** at `working-memory/okf-postgres/`, with a **doctor** (verifies/installs
+Ollama + models, Postgres + pgvector, db + schema, venv) and an **ingest** script
+(inventories a repo into knowledge cards). The installer **offers to run them at the
+end** so you can go from `install.sh` to a fully-indexed codebase in one sitting. See
 [Recall layer](#recall-layer-optional-macos) below. macOS-only for now.
 
 ## New in 0.2 — OKF + Postgres recall
@@ -21,7 +21,7 @@ Two upgrades, both backward-compatible:
   producer — durable docs lead with OKF's structured fields (`type`, `title`,
   `description`, `tags`, `timestamp`, `resource`), keeping `status`/`project` as
   kit extensions. Old `updated:` / `source:` still work. See `working-memory/System.md`.
-- **Optional recall layer ([`okf-postgres/`](okf-postgres/README.md)).** Adds a
+- **Optional recall layer ([`working-memory/okf-postgres/`](content/working-memory/okf-postgres/README.md)).** Adds a
   Postgres + pgvector index *under* the markdown: a small local model writes
   per-folder `feature-card` code maps on git commit, and any model recalls them
   over MCP (`memory_recall`) — with a git-SHA freshness contract — instead of
@@ -91,17 +91,18 @@ cd /path/to/your/project
 
 ### Recall layer (optional, macOS)
 
-At the end of install, on macOS, the installer offers to set up the
-[`okf-postgres/`](okf-postgres/README.md) recall layer and **inventory the project
+The recall engine ships **inside the vault** at `working-memory/okf-postgres/`
+(see its [README](content/working-memory/okf-postgres/README.md)). At the end of
+install, on macOS, the installer offers to set it up and **inventory the project
 into knowledge cards** right away. Choose:
 
-- **Now** — runs `okf-postgres/scripts/okf-doctor.sh` (verifies/installs Ollama +
-  models, Postgres + pgvector, the `okf_memory` db + schema, and the Python venv)
-  then `okf-ingest.sh` to sweep the repo into cards.
-- **Later** — the installer prints the exact commands. Run them whenever:
+- **Now** — runs `working-memory/okf-postgres/scripts/okf-doctor.sh` (verifies/installs
+  Ollama + models, Postgres + pgvector, the `okf_memory` db + schema, and the Python
+  venv) then `okf-ingest.sh` to sweep the repo into cards.
+- **Later** — the installer prints the exact commands. Run them from your project root:
 
   ```bash
-  okf-postgres/scripts/okf-ingest.sh --bootstrap --repo /path/to/your/project
+  working-memory/okf-postgres/scripts/okf-ingest.sh --bootstrap --repo .
   ```
 
 Use `--with-recall` to opt in non-interactively, or `--no-recall` to suppress the
@@ -187,7 +188,7 @@ The full convention (frontmatter, tags, tier purposes, when-to-promote rules) is
 
 ## What this is NOT
 
-- The base kit is a file convention, not a knowledge graph, database, or search tool. (The optional [`okf-postgres/`](okf-postgres/README.md) layer adds exactly those — embeddings, full-text, semantic recall — *underneath* the markdown, without changing the convention.)
+- The base kit is a file convention, not a knowledge graph, database, or search tool. (The optional [`working-memory/okf-postgres/`](content/working-memory/okf-postgres/README.md) layer adds exactly those — embeddings, full-text, semantic recall — *underneath* the markdown, without changing the convention.)
 - It does not replace Git history. Decisions still belong in commit messages; the vault captures the *why* behind work, not the *what*.
 - It does not enforce structure beyond what the discipline rule in `CLAUDE.md` asks the agent to follow. If the agent isn't reading `CLAUDE.md`, the kit can't help.
 

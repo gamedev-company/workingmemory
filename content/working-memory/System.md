@@ -159,7 +159,7 @@ Index surfaces:
 ## Postgres recall layer (okf-postgres)
 
 The base kit is a file convention — deliberately not a database. The optional
-**[okf-postgres](../okf-postgres/README.md)** layer adds the database *underneath*
+**[okf-postgres](okf-postgres/README.md)** layer adds the database *underneath*
 the markdown, exactly as OKF intends (a portable knowledge layer above a store):
 
 - **Source of truth stays markdown.** Postgres is a rebuildable derived index:
@@ -175,4 +175,4 @@ the markdown, exactly as OKF intends (a portable knowledge layer above a store):
 
 This tier is optional: without it, the vault is a pure file convention (works with
 any agent or none). With it, the same markdown becomes semantically queryable.
-Setup + design decisions: [`okf-postgres/README.md`](../okf-postgres/README.md).
+Setup + design decisions: [`okf-postgres/README.md`](okf-postgres/README.md).

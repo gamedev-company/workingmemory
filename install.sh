@@ -44,7 +44,8 @@ Options:
   --with-agents       Also install the journalist agent (.claude/agents/journalist.md)
   --with-obsidian     Also install the .obsidian/ vault config
   --with-recall       Set up the Postgres recall layer + inventory the project now
-                      (macOS only; runs okf-postgres/scripts/okf-doctor.sh + okf-ingest.sh)
+                      (macOS only; runs working-memory/okf-postgres/scripts/okf-doctor.sh
+                      + okf-ingest.sh — the engine ships inside the vault)
   --no-recall         Don't offer the recall-layer setup (skip the prompt)
   -h, --help          Show this help
 
@@ -52,6 +53,8 @@ What gets installed:
   CONTENT (always):
     working-memory/                  Skeleton with System.md, Index.md,
                                      short-term.md, empty tier directories
+    working-memory/okf-postgres/     Postgres recall engine (Python pkg + scripts +
+                                     schema); inert until you run its setup (below)
     CLAUDE.md                        Documentation Discipline section added
                                      (bounded by sentinel markers, idempotent)
 
@@ -104,11 +107,13 @@ need() {
 # ── Recall layer (okf-postgres) offer ─────────────────────────────────────────
 # After the content/harness install, optionally bootstrap the Postgres recall
 # layer and inventory the target repo into knowledge cards. macOS-only; the heavy
-# lifting (Ollama, Postgres, models, schema, venv, the index sweep) lives in
-# okf-postgres/scripts/. Honors --with-recall (1) / --no-recall (0); otherwise asks.
+# lifting (Ollama, Postgres, models, schema, venv, the index sweep) lives in the
+# engine that ships INSIDE the vault at working-memory/okf-postgres/scripts/.
+# Honors --with-recall (1) / --no-recall (0); otherwise asks.
 offer_recall_setup() {
-  local doctor="$SCRIPT_DIR/okf-postgres/scripts/okf-doctor.sh"
-  local ingest="$SCRIPT_DIR/okf-postgres/scripts/okf-ingest.sh"
+  local engine="$TARGET_WM/okf-postgres"
+  local doctor="$engine/scripts/okf-doctor.sh"
+  local ingest="$engine/scripts/okf-ingest.sh"
 
   # Nothing to offer if the recall layer isn't shipped alongside this installer.
   [ -x "$ingest" ] || return 0
@@ -153,10 +158,10 @@ offer_recall_setup() {
     }
   else
     say ""
-    say "[recall] skipped. To set it up later (from the kit repo):"
-    say "  $doctor                 # verify/install Ollama, Postgres, models, schema, venv"
-    say "  $ingest --repo \"$TARGET\"   # inventory the project into cards"
-    say "Or in one shot: $ingest --bootstrap --repo \"$TARGET\""
+    say "[recall] skipped. The engine ships inside your vault — set it up later with:"
+    say "  working-memory/okf-postgres/scripts/okf-doctor.sh            # verify/install env"
+    say "  working-memory/okf-postgres/scripts/okf-ingest.sh --repo .   # inventory into cards"
+    say "Or in one shot: working-memory/okf-postgres/scripts/okf-ingest.sh --bootstrap --repo ."
   fi
 }
 
@@ -190,6 +195,17 @@ else
   # Remove .obsidian unless requested
   if [ "$WITH_OBSIDIAN" -eq 0 ] && [ -d "$TARGET_WM/.obsidian" ]; then
     rm -rf "$TARGET_WM/.obsidian"
+  fi
+  # The okf-postgres engine now ships inside the vault. Strip any local-only build
+  # artifacts that a dev's working copy may carry (cp -R would otherwise drag a
+  # 100MB+ .venv with stale paths into every target). The doctor rebuilds .venv
+  # in-place per project.
+  if [ -d "$TARGET_WM/okf-postgres" ]; then
+    rm -rf "$TARGET_WM/okf-postgres/.venv" \
+           "$TARGET_WM/okf-postgres/test-vault" \
+           "$TARGET_WM/okf-postgres/build" \
+           "$TARGET_WM/okf-postgres/okfmem.egg-info"
+    find "$TARGET_WM/okf-postgres" -name __pycache__ -type d -prune -exec rm -rf {} + 2>/dev/null || true
   fi
   # Inject today's date (OKF timestamp + legacy updated) into short-term.md template
   today=$(date +%Y-%m-%d)

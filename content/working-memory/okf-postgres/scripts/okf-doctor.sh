@@ -180,7 +180,7 @@ fi
 okf_hd "Verdict"
 if [ "$PROBLEMS" -eq 0 ]; then
   okf_ok "environment ready. Inventory a repo with:"
-  okf_info "  okf-postgres/scripts/okf-ingest.sh --repo /path/to/project"
+  okf_info "  working-memory/okf-postgres/scripts/okf-ingest.sh --repo ."
   exit 0
 else
   okf_warn "$PROBLEMS item(s) need attention above. Resolve them and re-run the doctor."

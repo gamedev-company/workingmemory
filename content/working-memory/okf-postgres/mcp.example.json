@@ -1,9 +1,9 @@
 {
   "mcpServers": {
     "okf-memory": {
-      "command": "/ABSOLUTE/PATH/TO/okf-postgres/bin/okf-memory-mcp",
+      "command": "/ABSOLUTE/PATH/TO/your-project/working-memory/okf-postgres/bin/okf-memory-mcp",
       "env": {
-        "OKF_REPO": "/ABSOLUTE/PATH/TO/the-project-you-want-recall-over"
+        "OKF_REPO": "/ABSOLUTE/PATH/TO/your-project"
       }
     },
     "postgres": {

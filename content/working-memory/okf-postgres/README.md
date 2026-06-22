@@ -3,7 +3,7 @@
 > A local, OKF-compliant codebase-memory layer: Postgres-backed semantic recall
 > over a working-memory vault, so an AI agent stops re-reading the repo every session.
 
-This extends the [working-memory kit](../README.md) with the thing its own README
+This extends the [working-memory kit](../../../README.md) with the thing its own README
 said it deliberately *wasn't*: a database. The vault stays the **source of truth**
 (git-tracked, Obsidian-openable, [OKF](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing)-portable
 markdown). Postgres is a **derived recall index** — embeddings + full-text + a
@@ -57,10 +57,12 @@ working-memory/  (OKF markdown, git)  ──indexer──▶  Postgres + pgvecto
 > left to the community — the Python pipeline itself is portable if you provision
 > Postgres + Ollama yourself and run `okfmem` directly.
 
-One command provisions everything and inventories your repo:
+This engine ships **inside the vault** (`working-memory/okf-postgres/`), so the
+paths below are written from your project root. One command provisions everything
+and inventories your repo:
 
 ```bash
-okf-postgres/scripts/okf-ingest.sh --bootstrap --repo /path/to/your/project
+working-memory/okf-postgres/scripts/okf-ingest.sh --bootstrap --repo .
 ```
 
 `--bootstrap` first runs **`okf-doctor.sh`**, which is idempotent and checks (and,
@@ -78,16 +80,17 @@ where it can, installs) each piece, then `okf-ingest.sh` runs the inventory swee
 Run the doctor on its own any time to (re)verify the environment:
 
 ```bash
-okf-postgres/scripts/okf-doctor.sh          # add --yes for non-interactive
+working-memory/okf-postgres/scripts/okf-doctor.sh    # add --yes for non-interactive
 ```
 
 ## Usage
 
 ```bash
-# Provision + inventory in one shot (the scripted path above):
-scripts/okf-ingest.sh --bootstrap --repo /path/to/your/project --with-hook
+# Provision + inventory in one shot (the scripted path above), from project root:
+working-memory/okf-postgres/scripts/okf-ingest.sh --bootstrap --repo . --with-hook
 
-# …or drive the CLI directly once the environment is ready:
+# …or drive the CLI directly once the environment is ready (from this engine dir,
+# i.e. cd working-memory/okf-postgres):
 export OKF_REPO=/path/to/your/project          # the repo to map
 export OKF_VAULT=$OKF_REPO/working-memory       # where cards are written
 
