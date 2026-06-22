@@ -203,6 +203,7 @@ else
   if [ -d "$TARGET_WM/okf-postgres" ]; then
     rm -rf "$TARGET_WM/okf-postgres/.venv" \
            "$TARGET_WM/okf-postgres/.okf-env" \
+           "$TARGET_WM/okf-postgres/dashboard/index.html" \
            "$TARGET_WM/okf-postgres/test-vault" \
            "$TARGET_WM/okf-postgres/build" \
            "$TARGET_WM/okf-postgres/okfmem.egg-info"

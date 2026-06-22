@@ -9,11 +9,13 @@ content/working-memory/okf-postgres/.venv/
 content/working-memory/okf-postgres/test-vault/
 content/working-memory/okf-postgres/build/
 content/working-memory/okf-postgres/.okf-env
+content/working-memory/okf-postgres/dashboard/index.html
 # …and the same once installed into a target project's vault
 working-memory/okf-postgres/.venv/
 working-memory/okf-postgres/test-vault/
 working-memory/okf-postgres/build/
 working-memory/okf-postgres/.okf-env
+working-memory/okf-postgres/dashboard/index.html
 __pycache__/
 *.pyc
 .git/okf-enrich.log

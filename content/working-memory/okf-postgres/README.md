@@ -48,7 +48,9 @@ working-memory/  (OKF markdown, git)  ──indexer──▶  Postgres + pgvecto
 | `hooks/post-commit` | Git hook → `enrich-changed` in the background (the refresh trigger) |
 | `scripts/okf-doctor.sh` | **Bootstrap/verify the environment** (Ollama + models, Postgres + pgvector, db + schema, venv) — idempotent, macOS-only |
 | `scripts/okf-ingest.sh` | **Inventory a repo into cards** (the seed step); `--bootstrap` chains the doctor, `--with-hook` installs auto-refresh |
-| `scripts/lib.sh` | Shared helpers (Postgres.app resolution, server-ready probe, venv locator) |
+| `scripts/lib.sh` | Shared helpers (Postgres.app resolution, server-ready probe, venv locator, db guard) |
+| `dashboard/okf-dashboard.sh` | **Live HTML view** of the index — fetches from Postgres, renders via a tiny `{{token}}` compiler, re-generates on an interval |
+| `dashboard/template.html`, `card.html` | The page shell + per-card partial (restyle freely) |
 | `mcp.example.json` | Config for mcphost **and** Claude Code (same schema) |
 
 ## Setup (scripted — macOS)
@@ -109,6 +111,24 @@ cards auto-refresh on commit). To wire it up by hand instead:
 sed "s#__OKF_POSTGRES_DIR__#$PWD#g" hooks/post-commit > "$OKF_REPO/.git/hooks/post-commit"
 chmod +x "$OKF_REPO/.git/hooks/post-commit"
 ```
+
+### Live dashboard
+
+A self-refreshing HTML view of the index — what's mapped, what's drifted — with no
+web server. The script queries Postgres, renders the page through a tiny `{{token}}`
+shell template compiler, and rewrites the file on an interval; a `<meta refresh>` in
+the page reloads it in the browser.
+
+```bash
+working-memory/okf-postgres/dashboard/okf-dashboard.sh --repo . --open   # live, every 5s
+working-memory/okf-postgres/dashboard/okf-dashboard.sh --repo . --once   # render one shot
+#   --interval N   seconds between rebuilds      --db NAME   read a specific database
+#   --out FILE     where to write the HTML        --open     open it in your browser
+```
+
+Cards are sorted **stale-first**; the freshness verdict reuses `okfmem stale` (so it
+matches recall). The look lives in `dashboard/template.html` + `card.html` — both are
+plain `{{token}}` templates, so restyle them without touching the script.
 
 ### Give a model the memory tools
 

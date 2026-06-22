@@ -27,6 +27,16 @@ the project instead of cluttering the repo root.
   layer and inventory the project immediately, or prints the deferred commands to run
   later. New flags `--with-recall` (opt in non-interactively) and `--no-recall`.
 
+### Live dashboard
+- **`working-memory/okf-postgres/dashboard/okf-dashboard.sh`** — a self-refreshing
+  HTML view of the index (no web server). Queries Postgres with `psql`, renders
+  through a tiny `{{token}}` shell template compiler (`dashboard/template.html` +
+  `card.html`), and re-generates on an interval; a `<meta refresh>` reloads it in the
+  browser. Cards sort stale-first (freshness via `okfmem stale`). Flags: `--repo`,
+  `--db`, `--out`, `--interval`, `--once`, `--open`. Pure bash-3.2 (no associative
+  arrays); HTML-escapes all card text; atomic writes so the browser never sees a
+  half-rendered page.
+
 ### Database naming & safety
 - **Per-project, uniquely-named databases.** Each repo gets `okf_<slug>_<hash8>`
   (hash of the absolute repo path), derived in `okfmem/config.py` so the CLI, commit
