@@ -12,13 +12,14 @@
 
 set -e
 
-WORKING_MEMORY_KIT_VERSION="0.2.0"
+WORKING_MEMORY_KIT_VERSION="0.3.0"
 
 # ── Defaults ──────────────────────────────────────────────────────────────────
 TARGET="$PWD"
 UPGRADE=0
 WITH_AGENTS=0
 WITH_OBSIDIAN=0
+RECALL=-1   # tri-state: -1 ask, 0 skip, 1 set up now (the okf-postgres recall layer)
 
 # ── Parse args ────────────────────────────────────────────────────────────────
 while [ $# -gt 0 ]; do
@@ -28,6 +29,8 @@ while [ $# -gt 0 ]; do
     --upgrade)       UPGRADE=1; shift;;
     --with-agents)   WITH_AGENTS=1; shift;;
     --with-obsidian) WITH_OBSIDIAN=1; shift;;
+    --with-recall)   RECALL=1; shift;;
+    --no-recall)     RECALL=0; shift;;
     -h|--help)
       cat <<EOF
 working-memory-kit installer v${WORKING_MEMORY_KIT_VERSION}
@@ -40,6 +43,9 @@ Options:
                       touching working-memory/ content
   --with-agents       Also install the journalist agent (.claude/agents/journalist.md)
   --with-obsidian     Also install the .obsidian/ vault config
+  --with-recall       Set up the Postgres recall layer + inventory the project now
+                      (macOS only; runs okf-postgres/scripts/okf-doctor.sh + okf-ingest.sh)
+  --no-recall         Don't offer the recall-layer setup (skip the prompt)
   -h, --help          Show this help
 
 What gets installed:
@@ -93,6 +99,65 @@ die()  { printf 'error: %s\n' "$*" >&2; exit 1; }
 
 need() {
   command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"
+}
+
+# ── Recall layer (okf-postgres) offer ─────────────────────────────────────────
+# After the content/harness install, optionally bootstrap the Postgres recall
+# layer and inventory the target repo into knowledge cards. macOS-only; the heavy
+# lifting (Ollama, Postgres, models, schema, venv, the index sweep) lives in
+# okf-postgres/scripts/. Honors --with-recall (1) / --no-recall (0); otherwise asks.
+offer_recall_setup() {
+  local doctor="$SCRIPT_DIR/okf-postgres/scripts/okf-doctor.sh"
+  local ingest="$SCRIPT_DIR/okf-postgres/scripts/okf-ingest.sh"
+
+  # Nothing to offer if the recall layer isn't shipped alongside this installer.
+  [ -x "$ingest" ] || return 0
+  # Explicit opt-out.
+  [ "$RECALL" -eq 0 ] && return 0
+
+  # macOS-only for now (Linux/Windows left to the community).
+  if [ "$(uname)" != "Darwin" ]; then
+    [ "$RECALL" -eq 1 ] && warn "--with-recall ignored: the recall layer is macOS-only for now."
+    return 0
+  fi
+
+  say ""
+  say "━━━ Optional: Postgres recall layer (okf-postgres) ━━━"
+  say "Inventories this project into per-folder knowledge cards (embeddings + full-text"
+  say "in Postgres) so an agent recalls the codebase instead of re-reading it. Setup"
+  say "verifies/installs Ollama + models + Postgres, then runs the inventory sweep."
+  say ""
+
+  local do_it=0 reply="" yes_flag=""
+  if [ "$RECALL" -eq 1 ]; then
+    do_it=1
+    # Explicit --with-recall is non-interactive intent: let the sub-scripts auto-yes
+    # (install Ollama / pull models / install Postgres.app without re-prompting).
+    yes_flag="--yes"
+  elif [ ! -t 0 ]; then
+    say "[recall] non-interactive shell — skipping. Run setup later with:"
+  else
+    printf 'Set up the recall layer and inventory this project now? [y/N] '
+    read -r reply || reply=""
+    case "$reply" in [Yy]*) do_it=1;; esac
+  fi
+
+  if [ "$do_it" -eq 1 ]; then
+    say ""
+    say "[recall] bootstrapping environment + inventorying $TARGET …"
+    # --bootstrap chains the doctor; pass the project name from the target's basename.
+    "$ingest" --bootstrap $yes_flag --repo "$TARGET" --project "$(basename "$TARGET")" || {
+      warn "recall setup did not complete cleanly — see output above."
+      warn "you can re-run it any time: $ingest --bootstrap --repo \"$TARGET\""
+      return 0
+    }
+  else
+    say ""
+    say "[recall] skipped. To set it up later (from the kit repo):"
+    say "  $doctor                 # verify/install Ollama, Postgres, models, schema, venv"
+    say "  $ingest --repo \"$TARGET\"   # inventory the project into cards"
+    say "Or in one shot: $ingest --bootstrap --repo \"$TARGET\""
+  fi
 }
 
 # ── Pre-flight ────────────────────────────────────────────────────────────────
@@ -177,6 +242,7 @@ if [ ! -d "$TARGET_CLAUDE_DIR" ]; then
   say "  1. Read working-memory/System.md to learn the convention"
   say "  2. Seed working-memory/short-term.md with current project context"
   say "  3. Create today's journal: working-memory/journals/$(date +%Y-%m-%d).md"
+  offer_recall_setup
   exit 0
 fi
 
@@ -280,3 +346,5 @@ say "  1. Read working-memory/System.md"
 say "  2. Seed working-memory/short-term.md"
 say "  3. Create today's journal: working-memory/journals/$(date +%Y-%m-%d).md"
 say "  4. In Claude Code, run /working-memory to verify the harness"
+
+offer_recall_setup

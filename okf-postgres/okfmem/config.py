@@ -20,10 +20,20 @@ EMBED_MODEL = os.environ.get("OKF_EMBED_MODEL", "nomic-embed-text")
 EMBED_DIM = int(os.environ.get("OKF_EMBED_DIM", "768"))   # must match schema vector(N)
 ENRICH_MODEL = os.environ.get("OKF_ENRICH_MODEL", "qwen3.6:27b")
 
-# Folders we never card (noise / not ours).
+# Folders we never card (noise / not ours). Extend per-project with
+# OKF_IGNORE_EXTRA="dir1,dir2" (comma-separated).
+# NOTE: do NOT ignore Phoenix `priv/` — it holds Ecto migrations
+# (priv/repo/migrations/*.exs) and seeds (priv/repo/seeds.exs), which are exactly
+# the schema-change files that most need cards + freshness tracking.
 IGNORE_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", ".obsidian",
-               "dist", "build", "target", ".next", ".cache", "working-memory"}
-# Extensions worth reading into a card prompt.
-CODE_EXTS = {".py", ".ts", ".tsx", ".js", ".jsx", ".ex", ".exs", ".go", ".rs",
-             ".rb", ".java", ".kt", ".swift", ".c", ".h", ".cpp", ".sql", ".sh",
-             ".css", ".scss", ".html", ".vue", ".svelte", ".md", ".toml", ".yaml", ".yml"}
+               "dist", "build", "target", ".next", ".cache", "working-memory",
+               "_build", "deps", "_archive", "logs", ".claude"}
+IGNORE_DIRS |= {d.strip() for d in os.environ.get("OKF_IGNORE_EXTRA", "").split(",") if d.strip()}
+# Extensions worth reading into a card prompt. Extend per-project with
+# OKF_EXTS_EXTRA=".astro,.zig" (comma-separated; leading dot optional).
+CODE_EXTS = {".py", ".ts", ".tsx", ".js", ".jsx", ".ex", ".exs", ".heex", ".eex",
+             ".go", ".rs", ".rb", ".java", ".kt", ".swift", ".c", ".h", ".cpp",
+             ".sql", ".sh", ".css", ".scss", ".html", ".vue", ".svelte", ".md",
+             ".toml", ".yaml", ".yml"}
+CODE_EXTS |= {("" if e.strip().startswith(".") else ".") + e.strip()
+              for e in os.environ.get("OKF_EXTS_EXTRA", "").split(",") if e.strip()}

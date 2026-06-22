@@ -4,6 +4,15 @@
 
 The `working-memory/` vault is the external memory for an AI coding agent across sessions — the durable substrate of decisions, design, and architectural memory. This kit packages the convention + (optionally) Claude Code harness glue so you can drop it into any project.
 
+## New in 0.3 — one-command recall setup (macOS)
+
+The recall layer is no longer a manual, machine-specific chore. New
+`okf-postgres/scripts/` ship a **doctor** (verifies/installs Ollama + models,
+Postgres + pgvector, db + schema, venv) and an **ingest** script (inventories a repo
+into knowledge cards). The installer now **offers to run them at the end** so you can
+go from `install.sh` to a fully-indexed codebase in one sitting. See
+[Recall layer](#recall-layer-optional-macos) below. macOS-only for now.
+
 ## New in 0.2 — OKF + Postgres recall
 
 Two upgrades, both backward-compatible:
@@ -76,7 +85,28 @@ cd /path/to/your/project
 | `--upgrade` | Refresh `CLAUDE.md` sentinel block + harness glue without touching `working-memory/` content. Use this to pull in newer kit versions. |
 | `--with-agents` | Also install `.claude/agents/journalist.md` |
 | `--with-obsidian` | Also install `working-memory/.obsidian/` vault config |
+| `--with-recall` | Set up the Postgres recall layer + inventory the project **now** (macOS only; skips the prompt) |
+| `--no-recall` | Skip the recall-layer prompt entirely |
 | `-h` `--help` | Show full help |
+
+### Recall layer (optional, macOS)
+
+At the end of install, on macOS, the installer offers to set up the
+[`okf-postgres/`](okf-postgres/README.md) recall layer and **inventory the project
+into knowledge cards** right away. Choose:
+
+- **Now** — runs `okf-postgres/scripts/okf-doctor.sh` (verifies/installs Ollama +
+  models, Postgres + pgvector, the `okf_memory` db + schema, and the Python venv)
+  then `okf-ingest.sh` to sweep the repo into cards.
+- **Later** — the installer prints the exact commands. Run them whenever:
+
+  ```bash
+  okf-postgres/scripts/okf-ingest.sh --bootstrap --repo /path/to/your/project
+  ```
+
+Use `--with-recall` to opt in non-interactively, or `--no-recall` to suppress the
+prompt. The base kit works fine without any of this — the recall layer is purely
+additive. Linux/Windows support for the setup scripts is left to the community.
 
 ### Idempotency contract
 
@@ -174,7 +204,7 @@ The kit is intentionally small. To adapt:
 
 `install.sh` reports its version in the install header. The `CLAUDE.md` sentinel includes the version that produced the block: `<!-- working-memory-kit:begin version=0.2.0 -->`. Run `--upgrade` to refresh CLAUDE.md and harness glue to whatever version of the kit you're running.
 
-Changelog is in `CHANGELOG.md` (when releases start landing).
+Changelog is in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## License
 

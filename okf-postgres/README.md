@@ -46,32 +46,63 @@ working-memory/  (OKF markdown, git)  ──indexer──▶  Postgres + pgvecto
 | `okfmem/mcp_server.py` | MCP server: `memory_recall`, `memory_get_card`, `memory_stale_cards` |
 | `bin/okf-memory-mcp` | Launcher for MCP hosts (sets up env + venv) |
 | `hooks/post-commit` | Git hook → `enrich-changed` in the background (the refresh trigger) |
+| `scripts/okf-doctor.sh` | **Bootstrap/verify the environment** (Ollama + models, Postgres + pgvector, db + schema, venv) — idempotent, macOS-only |
+| `scripts/okf-ingest.sh` | **Inventory a repo into cards** (the seed step); `--bootstrap` chains the doctor, `--with-hook` installs auto-refresh |
+| `scripts/lib.sh` | Shared helpers (Postgres.app resolution, server-ready probe, venv locator) |
 | `mcp.example.json` | Config for mcphost **and** Claude Code (same schema) |
 
-## Setup (already done on this machine)
+## Setup (scripted — macOS)
 
-1. **Postgres + pgvector** — using the running Postgres.app (16.4, pgvector 0.7.4).
-   Database `okf_memory` created; schema applied.
-2. **Python env** — `python3 -m venv .venv && .venv/bin/pip install -e .`
-   (editable install; makes `okfmem` importable from any cwd, so the launcher and
-   git hook need no `PYTHONPATH`. `pip install -r requirements.txt` does the same —
-   it just points at `-e .`.)
-3. **Models** (local, via Ollama) — `nomic-embed-text` (768-dim embeddings),
-   `qwen3.6:27b` (enrichment + interactive).
+> **Platform:** the setup scripts support **macOS only** for now. Linux/Windows are
+> left to the community — the Python pipeline itself is portable if you provision
+> Postgres + Ollama yourself and run `okfmem` directly.
+
+One command provisions everything and inventories your repo:
+
+```bash
+okf-postgres/scripts/okf-ingest.sh --bootstrap --repo /path/to/your/project
+```
+
+`--bootstrap` first runs **`okf-doctor.sh`**, which is idempotent and checks (and,
+where it can, installs) each piece, then `okf-ingest.sh` runs the inventory sweep:
+
+1. **Ollama + models** — installs Ollama via Homebrew if missing, starts the server,
+   pulls `nomic-embed-text` (768-dim embeddings) and `qwen3.6:27b` (enrichment).
+2. **Postgres + pgvector** — prefers **Postgres.app** (locates its bundled `psql`
+   even when it's off `PATH`, starts the server); offers to install it via Homebrew
+   if absent. Creates the `okf_memory` database and applies the schema.
+3. **Python env** — `python3 -m venv .venv && .venv/bin/pip install -e .` (editable
+   install; `okfmem` then imports from any cwd, so the launcher and git hook need no
+   `PYTHONPATH`).
+
+Run the doctor on its own any time to (re)verify the environment:
+
+```bash
+okf-postgres/scripts/okf-doctor.sh          # add --yes for non-interactive
+```
 
 ## Usage
 
 ```bash
+# Provision + inventory in one shot (the scripted path above):
+scripts/okf-ingest.sh --bootstrap --repo /path/to/your/project --with-hook
+
+# …or drive the CLI directly once the environment is ready:
 export OKF_REPO=/path/to/your/project          # the repo to map
 export OKF_VAULT=$OKF_REPO/working-memory       # where cards are written
 
 .venv/bin/python -m okfmem.cli index            # one-time: card every folder
 .venv/bin/python -m okfmem.cli recall "how does auth work"
 .venv/bin/python -m okfmem.cli stale            # what's drifted
+```
 
-# Auto-refresh on commit:
-ln -sf "$PWD/hooks/post-commit" "$OKF_REPO/.git/hooks/post-commit"
-# (edit __OKF_POSTGRES_DIR__ in the hook to this directory's absolute path first)
+`okf-ingest.sh --with-hook` installs the git `post-commit` hook for you (it
+materializes `hooks/post-commit` with this directory's absolute path baked in, so
+cards auto-refresh on commit). To wire it up by hand instead:
+
+```bash
+sed "s#__OKF_POSTGRES_DIR__#$PWD#g" hooks/post-commit > "$OKF_REPO/.git/hooks/post-commit"
+chmod +x "$OKF_REPO/.git/hooks/post-commit"
 ```
 
 ### Give a model the memory tools
