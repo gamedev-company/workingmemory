@@ -21,10 +21,24 @@ the project instead of cluttering the repo root.
   first; `--with-hook` installs the git `post-commit` auto-refresh hook with the
   package path baked in; `--repo`, `--project`, `--yes`.
 - **`…/scripts/lib.sh`** — shared helpers (Postgres.app binary resolution,
-  server-ready probe, Ollama/model detection, venv locator, y/n prompt).
+  server-ready probe, Ollama/model detection, venv locator, y/n prompt, db resolution
+  + ownership guard).
 - **`install.sh`**: at the end of an install, on macOS, offers to set up the recall
   layer and inventory the project immediately, or prints the deferred commands to run
   later. New flags `--with-recall` (opt in non-interactively) and `--no-recall`.
+
+### Database naming & safety
+- **Per-project, uniquely-named databases.** Each repo gets `okf_<slug>_<hash8>`
+  (hash of the absolute repo path), derived in `okfmem/config.py` so the CLI, commit
+  hook, and MCP server all agree. No more shared `okf_memory` — multiple projects on
+  one Postgres no longer collide, and setup never lands on a database you already have.
+- **`--db NAME`** on `okf-doctor.sh` and `okf-ingest.sh` (and `OKF_DB_NAME`) to pin an
+  explicit database name; the resolved name is written to a generated `.okf-env` that
+  the commit hook and MCP launcher source, so the choice survives a repo move.
+- **Ownership guard.** Schema carries an `okf_meta` (`owner=okfmem`) marker; setup
+  checks it before applying the schema to a *pre-existing* database and **refuses**
+  (hard-aborts) if that database holds tables it didn't create. Empty databases are
+  adopted; brand-new ones are created. So the tooling cannot clobber your data.
 
 ### Changed
 - **Relocated `okf-postgres/` → `working-memory/okf-postgres/`.** The recall engine is

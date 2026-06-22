@@ -7,9 +7,10 @@
       }
     },
     "postgres": {
+      "_comment": "Optional raw-SQL access. Use the db name from working-memory/okf-postgres/.okf-env (e.g. okf_<project>_<hash>).",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-postgres",
-               "postgresql://localhost/okf_memory"]
+               "postgresql://localhost/okf_REPLACE_FROM_okf-env"]
     }
   }
 }

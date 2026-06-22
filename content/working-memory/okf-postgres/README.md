@@ -72,7 +72,9 @@ where it can, installs) each piece, then `okf-ingest.sh` runs the inventory swee
    pulls `nomic-embed-text` (768-dim embeddings) and `qwen3.6:27b` (enrichment).
 2. **Postgres + pgvector** — prefers **Postgres.app** (locates its bundled `psql`
    even when it's off `PATH`, starts the server); offers to install it via Homebrew
-   if absent. Creates the `okf_memory` database and applies the schema.
+   if absent. Creates a **per-project, uniquely-named** database (`okf_<slug>_<hash8>`,
+   or `--db NAME`) and applies the schema — refusing to touch a database it didn't
+   create.
 3. **Python env** — `python3 -m venv .venv && .venv/bin/pip install -e .` (editable
    install; `okfmem` then imports from any cwd, so the launcher and git hook need no
    `PYTHONPATH`).
@@ -127,12 +129,22 @@ mcphost -m ollama:qwen3.6:27b --config ~/.mcp.json -p "recall how recall works"
 
 | Var | Default | Meaning |
 |-----|---------|---------|
-| `OKF_DB_DSN` | `postgresql://localhost/okf_memory` | Postgres connection |
 | `OKF_REPO` | `.` | Repo being mapped |
 | `OKF_VAULT` | `$OKF_REPO/working-memory` | Where cards live |
+| `OKF_DB_NAME` | `okf_<slug>_<hash8>` | Database name — **derived per repo** so it never collides; override here or with `--db` |
+| `OKF_DB_DSN` | `postgresql://localhost/$OKF_DB_NAME` | Full connection string (wins over `OKF_DB_NAME`) |
 | `OKF_EMBED_MODEL` | `nomic-embed-text` | Embedder (768-dim) |
 | `OKF_ENRICH_MODEL` | `qwen3.6:27b` | Summarizer (run with `think=false`) |
 | `OLLAMA_HOST` | `http://localhost:11434` | Local Ollama |
+
+**Database naming & safety.** Each project gets its own database, named
+`okf_<repo-slug>_<hash8>` (the hash is of the repo's absolute path), so multiple
+projects share one Postgres without colliding — and setup never lands on a database
+you already have. Pin a specific name with `okf-doctor.sh`/`okf-ingest.sh --db NAME`
+(or `OKF_DB_NAME`); the resolved name is written to `.okf-env` so the commit hook and
+MCP server use the same one. Before applying its schema to a *pre-existing* database,
+setup checks for an `okf_meta` ownership marker and **refuses** if the database holds
+tables it didn't create — so it can't clobber someone else's data.
 
 ## Design decisions (settled)
 

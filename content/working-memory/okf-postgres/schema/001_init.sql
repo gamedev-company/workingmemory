@@ -10,6 +10,20 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- okf_meta — OWNERSHIP MARKER. Stamped the moment this schema is applied. Setup
+-- tooling (okf-doctor / okf-ingest) checks for the 'owner=okfmem' row before
+-- applying the schema to a *pre-existing* database, so it can refuse to write over
+-- a database it didn't create. Never drop this table.
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS okf_meta (
+  key        TEXT PRIMARY KEY,
+  value      TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+INSERT INTO okf_meta (key, value) VALUES ('owner', 'okfmem')
+  ON CONFLICT (key) DO NOTHING;
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- documents — one row per OKF markdown doc in the vault (any tier).
 -- A "feature-card" (type='feature-card') is the per-folder code map; other rows
 -- mirror the durable tiers (ref/design/plan/…) and journals.

@@ -12,6 +12,11 @@ REPO="$(git rev-parse --show-toplevel)"
 (
   export OKF_REPO="$REPO"
   export OKF_VAULT="${OKF_VAULT:-$REPO/working-memory}"
+  # Pin the same database the setup chose (derived or --db). config.py would derive
+  # it from OKF_REPO anyway, but .okf-env keeps a custom name stable.
+  if [ -f "$OKF_POSTGRES_DIR/.okf-env" ]; then
+    set -a; . "$OKF_POSTGRES_DIR/.okf-env"; set +a
+  fi
   # okfmem is installed editable into the venv (pip install -e .), so it imports
   # from the work-tree root where git runs hooks — no PYTHONPATH needed.
   "$OKF_POSTGRES_DIR/.venv/bin/python" -m okfmem.cli enrich-changed --since HEAD~1 \

@@ -1,14 +1,21 @@
 #!/bin/bash
 # okf-doctor.sh — verify (and, where it can, provision) everything the okf-postgres
 # recall layer needs on macOS: Ollama + models, a reachable Postgres with pgvector,
-# the okf_memory database + schema, and the Python venv.
+# the project database + schema, and the Python venv.
 #
 # Idempotent: safe to re-run. Every step checks before it acts and reports what it
 # found. Nothing here touches the cloud — embeddings + enrichment are 100% local.
 #
-# Usage:
-#   okf-doctor.sh [--yes] [--skip-models] [--embed-model M] [--enrich-model M]
+# The database is per-project and UNIQUELY named by default (okf_<slug>_<hash> of the
+# repo path), so it never collides with an existing database. The doctor refuses to
+# apply its schema over a database it didn't create (see the ownership guard).
 #
+# Usage:
+#   okf-doctor.sh [--repo DIR] [--db NAME] [--yes] [--skip-models]
+#                 [--embed-model M] [--enrich-model M]
+#
+#   --repo DIR       project whose database to provision (default: $OKF_REPO or cwd)
+#   --db NAME        use/create this exact database instead of the derived name
 #   --yes            assume "yes" to every prompt (non-interactive / CI)
 #   --skip-models    don't pull Ollama models (just verify the rest)
 #   --embed-model    override embedder    (default: $OKF_EMBED_MODEL or nomic-embed-text)
@@ -24,22 +31,35 @@ okf_require_macos
 # ── Config (env-overridable, matching okfmem/config.py defaults) ─────────────────
 EMBED_MODEL="${OKF_EMBED_MODEL:-nomic-embed-text}"
 ENRICH_MODEL="${OKF_ENRICH_MODEL:-qwen3.6:27b}"
-DB_DSN="${OKF_DB_DSN:-postgresql://localhost/okf_memory}"
-DB_NAME="${OKF_DB_NAME:-$(printf '%s\n' "$DB_DSN" | sed -E 's#.*/([^/?]+).*#\1#')}"
 SKIP_MODELS=0
+REPO="${OKF_REPO:-$PWD}"
+DB_OVERRIDE=""
 ROOT="$(okf_root)"
 SCHEMA="$ROOT/schema/001_init.sql"
 
 while [ $# -gt 0 ]; do
   case "$1" in
+    --repo)          REPO="$2"; shift 2;;
+    --repo=*)        REPO="${1#*=}"; shift;;
+    --db)            DB_OVERRIDE="$2"; shift 2;;
+    --db=*)          DB_OVERRIDE="${1#*=}"; shift;;
     --yes|-y)        export OKF_ASSUME_YES=1; shift;;
     --skip-models)   SKIP_MODELS=1; shift;;
     --embed-model)   EMBED_MODEL="$2"; shift 2;;
     --enrich-model)  ENRICH_MODEL="$2"; shift 2;;
-    -h|--help)       sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+    -h|--help)       sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
     *) okf_die "unknown flag: $1 (try --help)";;
   esac
 done
+
+REPO="$(cd "$REPO" 2>/dev/null && pwd)" || okf_die "repo path does not exist: $REPO"
+if [ -n "$DB_OVERRIDE" ] && ! okf_valid_db_name "$DB_OVERRIDE"; then
+  okf_die "--db '$DB_OVERRIDE' is not a valid database name (use [A-Za-z_][A-Za-z0-9_]*, ≤63 chars)."
+fi
+# Single source of truth: ask the package config to resolve name + DSN.
+DB_NAME="$(okf_db_value DB_NAME "$REPO" "$DB_OVERRIDE")"
+DB_DSN="$(okf_db_value DB_DSN "$REPO" "$DB_OVERRIDE")"
+[ -n "$DB_NAME" ] || okf_die "could not resolve a database name (is python3 on PATH?)."
 
 PROBLEMS=0
 
@@ -123,35 +143,12 @@ if okf_pg_ready; then
   okf_ok "Postgres reachable on localhost"
   PSQL="$(okf_psql)"          || okf_die "Postgres is up but no psql binary found (Postgres.app bin missing?)."
   CREATEDB="$(okf_createdb)"  || CREATEDB=""
-  # Create the database if absent.
-  if "$PSQL" -h localhost -d postgres -tAc \
-       "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" 2>/dev/null | grep -q 1; then
-    okf_ok "database '$DB_NAME' exists"
-  else
-    okf_info "creating database '$DB_NAME'…"
-    if [ -n "$CREATEDB" ]; then "$CREATEDB" -h localhost "$DB_NAME"
-    else "$PSQL" -h localhost -d postgres -c "CREATE DATABASE \"$DB_NAME\"" >/dev/null; fi
-    okf_ok "created database '$DB_NAME'"
-  fi
-  # pgvector + schema. CREATE EXTENSION is in the schema file; surface a clear error
-  # if the extension isn't available (Postgres.app bundles it; brew needs `pgvector`).
-  if "$PSQL" "$DB_DSN" -tAc \
-       "SELECT 1 FROM pg_available_extensions WHERE name='vector'" 2>/dev/null | grep -q 1; then
-    okf_ok "pgvector available"
-  else
-    okf_warn "pgvector extension not available in this Postgres."
-    okf_info "Postgres.app bundles it; for a brew server run: brew install pgvector"
-    PROBLEMS=$((PROBLEMS + 1))
-  fi
-  okf_info "applying schema (idempotent)…"
-  # Quiet the "already exists, skipping" NOTICEs on re-runs; keep real errors.
-  if PGOPTIONS='-c client_min_messages=warning' \
-       "$PSQL" "$DB_DSN" -v ON_ERROR_STOP=1 -q -f "$SCHEMA"; then
-    okf_ok "schema applied to '$DB_NAME'"
-  else
-    okf_warn "schema apply failed — see the psql error above."
-    PROBLEMS=$((PROBLEMS + 1))
-  fi
+  okf_info "project database: $DB_NAME"
+  [ -n "$DB_OVERRIDE" ] && okf_info "(explicit --db override)"
+  # Guarded create + schema: refuses to touch a database it didn't create. Hard-aborts
+  # on a foreign, non-empty database (your data is safe); soft-fails on pgvector/schema.
+  okf_ensure_db "$PSQL" "$CREATEDB" "$DB_NAME" "$DB_DSN" "$SCHEMA" "$ROOT" \
+    || PROBLEMS=$((PROBLEMS + 1))
 else
   okf_warn "no reachable Postgres. Install Postgres.app (https://postgresapp.com) or a"
   okf_info "brew server, start it, then re-run this doctor."
