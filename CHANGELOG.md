@@ -61,6 +61,14 @@ the project instead of cluttering the repo root.
 - okf-postgres README: replaced the "already done on this machine" notes with the
   scripted, reproducible setup (doctor + ingest); documented the macOS-only scope.
 
+### Docs
+- **`WALKTHROUGH.md`** — end-to-end guide (install → recall layer → inventory → recall
+  → auto-refresh → dashboard → multi-project), with every command and what to expect.
+- **`TROUBLESHOOTING.md`** — symptom→cause→fix for the common snags (Ollama, Postgres.app
+  off `PATH`, pgvector, the db guard, the venv, recall, the dashboard, MCP wiring).
+- README rewritten for the 0.3 surface (scripted setup, per-project databases, dashboard)
+  with a Documentation index linking the guides.
+
 ### Notes
 - Linux/Windows are intentionally unsupported by the setup scripts for now (the
   Python pipeline remains portable if you provision Postgres + Ollama yourself).

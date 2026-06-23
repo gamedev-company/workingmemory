@@ -7,11 +7,29 @@ The `working-memory/` vault is the external memory for an AI coding agent across
 ## New in 0.3 — one-command recall setup (macOS)
 
 The recall layer is no longer a manual, machine-specific chore. It now ships **inside
-the vault** at `working-memory/okf-postgres/`, with a **doctor** (verifies/installs
-Ollama + models, Postgres + pgvector, db + schema, venv) and an **ingest** script
-(inventories a repo into knowledge cards). The installer **offers to run them at the
-end** so you can go from `install.sh` to a fully-indexed codebase in one sitting. See
-[Recall layer](#recall-layer-optional-macos) below. macOS-only for now.
+the vault** at `working-memory/okf-postgres/`:
+
+- **Scripted setup.** A **doctor** verifies/installs Ollama + models, Postgres +
+  pgvector, the database + schema, and the Python venv; an **ingest** script
+  inventories a repo into knowledge cards. The installer **offers to run them at the
+  end** so you go from `install.sh` to a fully-indexed codebase in one sitting.
+- **Per-project, collision-proof databases.** Each repo gets a uniquely-named
+  database (`okf_<slug>_<hash>`); setup **refuses** to touch a database it didn't
+  create, so it can't clobber existing data. Override with `--db NAME`.
+- **Live dashboard.** A self-refreshing HTML view of the index (what's mapped, what's
+  drifted) — no web server. See the [Recall layer](#recall-layer-optional-macos) below.
+
+macOS-only for now.
+
+## Documentation
+
+- **[WALKTHROUGH.md](WALKTHROUGH.md)** — end-to-end, zero → indexed codebase → live
+  dashboard, with every command and what to expect.
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** — fixes for the common snags (Ollama,
+  Postgres.app, models, the db guard, the dashboard, MCP wiring).
+- **[CHANGELOG.md](CHANGELOG.md)** — what changed across releases.
+- `working-memory/okf-postgres/`[`README.md`](content/working-memory/okf-postgres/README.md)
+  — the recall layer's design + reference.
 
 ## New in 0.2 — OKF + Postgres recall
 
@@ -97,7 +115,7 @@ install, on macOS, the installer offers to set it up and **inventory the project
 into knowledge cards** right away. Choose:
 
 - **Now** — runs `working-memory/okf-postgres/scripts/okf-doctor.sh` (verifies/installs
-  Ollama + models, Postgres + pgvector, the `okf_memory` db + schema, and the Python
+  Ollama + models, Postgres + pgvector, a per-project database + schema, and the Python
   venv) then `okf-ingest.sh` to sweep the repo into cards.
 - **Later** — the installer prints the exact commands. Run them from your project root:
 
@@ -105,9 +123,17 @@ into knowledge cards** right away. Choose:
   working-memory/okf-postgres/scripts/okf-ingest.sh --bootstrap --repo .
   ```
 
+Then watch it live:
+
+```bash
+working-memory/okf-postgres/dashboard/okf-dashboard.sh --repo . --open
+```
+
 Use `--with-recall` to opt in non-interactively, or `--no-recall` to suppress the
 prompt. The base kit works fine without any of this — the recall layer is purely
-additive. Linux/Windows support for the setup scripts is left to the community.
+additive. Linux/Windows support for the setup scripts is left to the community. For a
+guided run-through see **[WALKTHROUGH.md](WALKTHROUGH.md)**; for snags,
+**[TROUBLESHOOTING.md](TROUBLESHOOTING.md)**.
 
 ### Idempotency contract
 
@@ -122,6 +148,9 @@ additive. Linux/Windows support for the setup scripts is left to the community.
 - `jq` — only required if `.claude/` exists in target (for `settings.json` merge)
 
 ## First-session walkthrough
+
+> For the full end-to-end path (including the recall layer and dashboard), see
+> **[WALKTHROUGH.md](WALKTHROUGH.md)**. The short version, for the base convention:
 
 After install:
 
@@ -203,7 +232,7 @@ The kit is intentionally small. To adapt:
 
 ## Versioning
 
-`install.sh` reports its version in the install header. The `CLAUDE.md` sentinel includes the version that produced the block: `<!-- working-memory-kit:begin version=0.2.0 -->`. Run `--upgrade` to refresh CLAUDE.md and harness glue to whatever version of the kit you're running.
+`install.sh` reports its version in the install header. The `CLAUDE.md` sentinel includes the version that produced the block: `<!-- working-memory-kit:begin version=0.3.0 -->`. Run `--upgrade` to refresh CLAUDE.md and harness glue to whatever version of the kit you're running.
 
 Changelog is in [`CHANGELOG.md`](CHANGELOG.md).
 
